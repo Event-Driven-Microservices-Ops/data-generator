@@ -12,7 +12,8 @@ func NewServer(cs *config.ServerConfig) *http.Server {
 	rh := NewRestHandler(s)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET "+ApiPathData, rh.GetData)
+	mux.HandleFunc("GET "+ApiPathDataAsBatch, rh.GetDataAsBatch)
+	mux.HandleFunc("GET "+ApiPathDataAsStream, rh.GetDataAsStream)
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	return &http.Server{
