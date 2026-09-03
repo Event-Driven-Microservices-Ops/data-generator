@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/urbaniakmichal/data-generator/internal/config"
 )
@@ -18,10 +19,51 @@ func NewRestHandler(s *Service) *RestHandler {
 	}
 }
 
-func (rh *RestHandler) GetData(res http.ResponseWriter, req *http.Request) {
-	query := req.URL.Query()
+func (rh *RestHandler) GetDataAsBatch(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(res).Encode(rh.service.GenerateNewData(*parseFlags(req)))
+}
 
-	flags := &config.Flags{
+func (rh *RestHandler) GetDataAsStream(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "text/event-stream")
+	res.Header().Set("Cache-Control", "no-cache")
+	res.Header().Set("Connection", "keep-alive")
+	res.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flush, isOk := res.(http.Flusher)
+	if !isOk {
+		http.Error(res, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-req.Context().Done():
+			return
+		case <-ticker.C:
+			payload := rh.service.GenerateNewData(*parseFlags(req))
+			jsonData, err := json.Marshal(payload)
+			if err != nil {
+				continue
+			}
+
+			// format SSE (data: [JSON]\n\n)
+			_, _ = res.Write([]byte("data: "))
+			_, _ = res.Write(jsonData)
+			_, _ = res.Write([]byte("\n\n"))
+
+			flush.Flush()
+		}
+	}
+}
+
+func parseFlags(req *http.Request) *config.Flags {
+	query := req.URL.Query()
+	flags := config.Flags{
 		CountFlag:       parseIntPtr(query.Get("count")),
 		IntervalFlag:    parseIntPtr(query.Get("interval")),
 		AccountFlag:     parseBoolPtr(query.Get("account")),
@@ -36,12 +78,7 @@ func (rh *RestHandler) GetData(res http.ResponseWriter, req *http.Request) {
 		CountryCodeFlag: parseStringPtr(query.Get("country")),
 		DeviceTypeFlag:  parseStringPtr(query.Get("device")),
 	}
-
-	resp := rh.service.GenerateNewData(*flags)
-
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(res).Encode(resp)
+	return &flags
 }
 
 func parseIntPtr(s string) *int {
