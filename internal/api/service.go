@@ -22,8 +22,8 @@ func (s *Service) GenerateNewData(f config.Flags) []Payload {
 	var payloads []Payload
 
 	count := 1
-	if f.CountFlag != nil && *f.CountFlag > 0 {
-		count = *f.CountFlag
+	if f.BatchSizeFlag != nil && *f.BatchSizeFlag > 0 {
+		count = *f.BatchSizeFlag
 	}
 
 	for i := 0; i < count; i++ {

@@ -1,8 +1,8 @@
 package config
 
 type Flags struct {
-	CountFlag    *int
-	IntervalFlag *int
+	BatchSizeFlag *int
+	IntervalFlag  *int
 
 	AccountFlag   *bool
 	EventTypeFlag *string

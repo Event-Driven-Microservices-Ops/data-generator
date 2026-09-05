@@ -64,7 +64,7 @@ func (rh *RestHandler) GetDataAsStream(res http.ResponseWriter, req *http.Reques
 func parseFlags(req *http.Request) *config.Flags {
 	query := req.URL.Query()
 	flags := config.Flags{
-		CountFlag:       parseIntPtr(query.Get("count")),
+		BatchSizeFlag:   parseIntPtr(query.Get("batch_size")),
 		IntervalFlag:    parseIntPtr(query.Get("interval")),
 		AccountFlag:     parseBoolPtr(query.Get("account")),
 		FraudFlag:       parseBoolPtr(query.Get("fraud")),
