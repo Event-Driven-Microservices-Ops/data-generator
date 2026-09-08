@@ -7,7 +7,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o data-generator .
+RUN CGO_ENABLED=0 GOOS=linux go build -o data-generator ./cmd/generator
 
 # --- Stage 2: Runtime ---
 FROM alpine:latest
